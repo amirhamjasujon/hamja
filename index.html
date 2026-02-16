@@ -3,42 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Massenger - Home</title>
+    <title>Messenger - Home</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #fff; margin: 0; display: flex; justify-content: center; }
-        .app-frame { width: 100%; max-width: 400px; height: 100vh; display: flex; flex-direction: column; background: white; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #fff; margin: 0; display: flex; justify-content: center; }
         
-        /* হেডার */
-        header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background: #fff; }
-        .logo { font-size: 24px; font-weight: 800; color: #0084ff; letter-spacing: -1px; }
-        .profile-icon { width: 40px; height: 40px; background: #f0f2f5; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #ddd; }
+        .app-frame { width: 100%; max-width: 500px; height: 100vh; display: flex; flex-direction: column; background: white; }
+        
+        header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f2f5; }
+        .logo { font-size: 26px; font-weight: 800; color: #0084ff; letter-spacing: -1px; }
+
+        .profile-wrapper { display: flex; flex-direction: column; align-items: center; cursor: pointer; text-decoration: none; }
+        .profile-icon { width: 42px; height: 42px; background: #f0f2f5; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #ddd; }
         .profile-icon img { width: 100%; height: 100%; object-fit: cover; }
+        .login-label { font-size: 10px; color: #0084ff; font-weight: bold; margin-top: 2px; }
 
         .container { flex: 1; padding: 0 15px; overflow-y: auto; }
+        .search-area { padding: 12px 0; position: sticky; top: 0; background: white; z-index: 10; }
+        .search-input { width: 100%; padding: 12px 18px; border-radius: 25px; border: none; background: #f0f2f5; outline: none; font-size: 16px; }
 
-        /* সার্চ বার */
-        .search-area { padding: 10px 0; position: sticky; top: 0; background: white; z-index: 10; }
-        .search-input { width: 100%; padding: 10px 15px; border-radius: 20px; border: none; background: #f0f2f5; outline: none; font-size: 16px; }
-
-        /* ইউজার লিস্ট স্টাইল */
-        .user-item { display: flex; align-items: center; padding: 12px 10px; border-radius: 12px; cursor: pointer; transition: 0.2s; margin-bottom: 5px; }
+        /* ইউজার লিস্ট এবং অনলাইন ডট */
+        .user-item { display: flex; align-items: center; padding: 12px 10px; border-radius: 15px; cursor: pointer; margin-bottom: 5px; position: relative; }
         .user-item:hover { background: #f5f5f5; }
-        .avatar { width: 55px; height: 55px; background: #0084ff; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 20px; font-weight: bold; overflow: hidden; }
+        
+        .avatar-wrapper { position: relative; margin-right: 15px; }
+        .avatar { width: 58px; height: 58px; background: #0084ff; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; overflow: hidden; }
         .avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .user-details { flex: 1; }
+        
+        /* সবুজ অনলাইন আইকন */
+        .online-dot { 
+            position: absolute; bottom: 3px; right: 3px; 
+            width: 14px; height: 14px; background: #31a24c; 
+            border: 2px solid white; border-radius: 50%; 
+            display: none; /* ডিফল্টভাবে হাইড */
+        }
+
+        .user-details { flex: 1; border-bottom: 1px solid #f0f2f5; padding-bottom: 10px; }
         .user-name { font-size: 16px; font-weight: 600; color: #050505; margin: 0; }
         .last-msg { font-size: 13px; color: #65676b; margin-top: 3px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
 
-        /* P1 ভিউ (লগইন ছাড়া) */
-        #view-p1 { text-align: center; padding-top: 100px; display: none; }
-        .btn-signup { background: #0084ff; color: white; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; }
-
-        #view-p2 { display: none; }
         .hidden { display: none !important; }
+        #view-p1 { text-align: center; padding: 50px 20px; }
     </style>
 </head>
 <body>
@@ -46,30 +55,26 @@
 <div class="app-frame">
     <header>
         <div class="logo">Chats</div>
-        <a href="pro.html" class="profile-icon" id="header-profile-link">
-            <div id="header-avatar-content" style="font-weight: bold; color: #555;">?</div>
+        <a href="login.html" class="profile-wrapper" id="profileLink">
+            <div class="profile-icon" id="profileIconBox">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#65676b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+            <span class="login-label" id="loginLabel">Login</span>
         </a>
     </header>
 
     <div class="container">
         <div id="view-p1">
-            <h2 style="color: #333;">Welcome to Messenger</h2>
-            <a href="sign.html" class="btn-signup">একাউন্ট তৈরি করুন</a>
+            <h2 style="color: #050505;">Messenger-এ স্বাগতম</h2>
+            <p style="color: #65676b;">চ্যাট করতে লগইন করুন।</p>
         </div>
 
-        <div id="view-p2">
+        <div id="view-p2" class="hidden">
             <div class="search-area">
                 <input type="text" id="searchBox" class="search-input" placeholder="সার্চ করুন..." oninput="handleSearch()">
             </div>
-
-            <div id="chat-list-container">
-                <div id="chatList"></div>
-            </div>
-
-            <div id="search-results-container" class="hidden">
-                <p style="font-size: 12px; color: #666; font-weight: bold; margin-left: 10px;">সার্চ রেজাল্ট</p>
-                <div id="searchResults"></div>
-            </div>
+            <div id="chatList"></div>
+            <div id="searchResults" class="hidden"></div>
         </div>
     </div>
 </div>
@@ -79,8 +84,6 @@
         apiKey: "AIzaSyD_7v6rBHjVLHVK5OGiJpkgBzAuaJO8vn0",
         authDomain: "boi-baz-v2.firebaseapp.com",
         projectId: "boi-baz-v2",
-        storageBucket: "boi-baz-v2.firebasestorage.app",
-        messagingSenderId: "573343324145",
         appId: "1:573343324145:web:42899dd75501af36985650"
     };
 
@@ -91,120 +94,88 @@
     const myName = localStorage.getItem("username");
 
     window.onload = function() {
-        if (myName && myCode) {
-            document.getElementById('view-p1').style.display = 'none';
-            document.getElementById('view-p2').style.display = 'block';
-            loadMyProfilePic(); // নিজের ছবি লোড
-            loadChatHistory();  // চ্যাট লিস্ট লোড
-        } else {
-            document.getElementById('view-p1').style.display = 'block';
+        if (myCode && myName) {
+            document.getElementById('view-p1').classList.add('hidden');
+            document.getElementById('view-p2').classList.remove('hidden');
+            document.getElementById('loginLabel').classList.add('hidden');
+            document.getElementById('profileLink').href = "pro.html";
+            updateMyPresence();
+            loadMyProfile();
+            loadChatHistory();
         }
     }
 
-    // নিজের প্রোফাইল পিকচার হেডারে সেট করা
-    function loadMyProfilePic() {
-        db.collection("users").doc(myCode).onSnapshot((doc) => {
-            if (doc.exists) {
-                const data = doc.data();
-                const headerContent = document.getElementById('header-avatar-content');
-                if (data.profilePic) {
-                    headerContent.innerHTML = `<img src="${data.profilePic}" alt="Me">`;
-                } else {
-                    headerContent.innerText = data.userName.charAt(0).toUpperCase();
-                }
+    // নিজের অনলাইন স্ট্যাটাস আপডেট
+    function updateMyPresence() {
+        db.collection("users").doc(myCode).update({ status: 'online', lastSeen: firebase.firestore.FieldValue.serverTimestamp() });
+        window.addEventListener('beforeunload', () => db.collection("users").doc(myCode).update({ status: 'offline' }));
+    }
+
+    function loadMyProfile() {
+        db.collection("users").doc(myCode).onSnapshot(doc => {
+            if (doc.exists && doc.data().profilePic) {
+                document.getElementById('profileIconBox').innerHTML = `<img src="${doc.data().profilePic}">`;
             }
         });
     }
 
-    // চ্যাট হিস্ট্রি লোড করা
     function loadChatHistory() {
-        db.collection("chats")
-          .where("receiverCode", "==", myCode)
-          .onSnapshot((snapshot) => {
-              snapshot.forEach(doc => {
-                  const data = doc.data();
-                  fetchUserInfoAndRender(data.senderName, data.senderCode, data.lastMsg, document.getElementById('chatList'));
-              });
-          });
-          
-        db.collection("chats")
-          .where("senderCode", "==", myCode)
-          .onSnapshot((snapshot) => {
-              snapshot.forEach(doc => {
-                  const data = doc.data();
-                  fetchUserInfoAndRender(data.receiverName, data.receiverCode, "You: " + data.lastMsg, document.getElementById('chatList'));
-              });
-          });
+        db.collection("chats").where("receiverCode", "==", myCode).onSnapshot(s => s.forEach(doc => fetchUser(doc.data().senderCode, doc.data().lastMsg)));
+        db.collection("chats").where("senderCode", "==", myCode).onSnapshot(s => s.forEach(doc => fetchUser(doc.data().receiverCode, "You: " + doc.data().lastMsg)));
     }
 
-    // ইউজার ইনফো (ছবিসহ) এনে লিস্টে দেখানো
-    function fetchUserInfoAndRender(name, code, subText, container) {
-        db.collection("users").doc(code).get().then((userDoc) => {
-            let pic = "";
-            if (userDoc.exists && userDoc.data().profilePic) {
-                pic = userDoc.data().profilePic;
+    function fetchUser(code, lastMsg) {
+        // রিয়েল-টাইম স্ন্যাপশট যাতে অনলাইন ডট সাথে সাথে আপডেট হয়
+        db.collection("users").doc(code).onSnapshot(doc => {
+            if(doc.exists) {
+                const data = doc.data();
+                renderUserItem(data.userName, data.userCode, lastMsg, data.profilePic, data.status);
             }
-            renderUserItem(name, code, subText, container, pic);
         });
     }
 
-    // সার্চ হ্যান্ডলার
-    function handleSearch() {
-        const query = document.getElementById('searchBox').value.trim();
-        const chatContainer = document.getElementById('chat-list-container');
-        const searchContainer = document.getElementById('search-results-container');
-        const resultsDiv = document.getElementById('searchResults');
-
-        if (query === "") {
-            chatContainer.classList.remove('hidden');
-            searchContainer.classList.add('hidden');
-            return;
-        }
-
-        chatContainer.classList.add('hidden');
-        searchContainer.classList.remove('hidden');
-
-        db.collection("users")
-          .where("userName", ">=", query)
-          .where("userName", "<=", query + "\uf8ff")
-          .get()
-          .then((querySnapshot) => {
-            resultsDiv.innerHTML = "";
-            querySnapshot.forEach((doc) => {
-                const user = doc.data();
-                if(user.userCode !== myCode) {
-                    renderUserItem(user.userName, user.userCode, "Messenger User", resultsDiv, user.profilePic);
-                }
-            });
-          });
-    }
-
-    // ইউজার আইটেম রেন্ডার করার ফাংশন
-    function renderUserItem(name, code, subText, container, picUrl) {
-        let existing = document.getElementById('user-' + code);
-        if (existing) existing.remove(); // ডুপ্লিকেট এড়াতে
+    function renderUserItem(name, code, msg, pic, status) {
+        let old = document.getElementById('u-' + code);
+        if (old) old.remove();
 
         const div = document.createElement('div');
         div.className = 'user-item';
-        div.id = 'user-' + code;
+        div.id = 'u-' + code;
         
-        let avatarContent = picUrl ? `<img src="${picUrl}">` : name.charAt(0).toUpperCase();
+        let avatarContent = pic ? `<img src="${pic}">` : name.charAt(0).toUpperCase();
+        let isOnline = (status === 'online');
 
         div.innerHTML = `
-            <div class="avatar">${avatarContent}</div>
+            <div class="avatar-wrapper">
+                <div class="avatar">${avatarContent}</div>
+                <div class="online-dot" style="display: ${isOnline ? 'block' : 'none'}"></div>
+            </div>
             <div class="user-details">
                 <p class="user-name">${name}</p>
-                <span class="last-msg">${subText}</span>
+                <span class="last-msg">${msg}</span>
             </div>
         `;
+        
         div.onclick = () => {
             localStorage.setItem("chatTargetName", name);
             localStorage.setItem("chatTargetCode", code);
             window.location.href = "mass.html";
         };
-        container.appendChild(div);
+        document.getElementById('chatList').prepend(div);
+    }
+
+    function handleSearch() {
+        const query = document.getElementById('searchBox').value.trim();
+        if (!query) { document.getElementById('searchResults').classList.add('hidden'); return; }
+        
+        document.getElementById('searchResults').classList.remove('hidden');
+        db.collection("users").where("userName", ">=", query).where("userName", "<=", query + "\uf8ff").get().then(snap => {
+            document.getElementById('searchResults').innerHTML = "";
+            snap.forEach(doc => {
+                if(doc.id !== myCode) renderUserItem(doc.data().userName, doc.id, "Messenger User", doc.data().profilePic, doc.data().status);
+            });
+        });
     }
 </script>
-
 </body>
 </html>
