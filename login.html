@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>লগইন করুন</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { width: 330px; background: white; padding: 40px 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+        h2 { color: #0084ff; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; outline: none; font-size: 16px; }
+        input:focus { border-color: #0084ff; }
+        .btn-login { width: 100%; background: #0084ff; color: white; border: none; padding: 14px; border-radius: 10px; font-size: 17px; cursor: pointer; font-weight: bold; }
+        #status { margin-top: 15px; font-size: 14px; font-weight: bold; }
+        .footer-text { margin-top: 20px; font-size: 13px; color: #666; }
+        .footer-text a { color: #0084ff; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <h2>Messenger</h2>
+    <p style="color: #666; margin-bottom: 20px;">আপনার একাউন্টে লগইন করুন</p>
+    
+    <input type="text" id="loginName" placeholder="আপনার নাম">
+    <input type="number" id="loginCode" placeholder="৬ সংখ্যার কোড" oninput="if(this.value.length > 6) this.value = this.value.slice(0, 6);">
+    
+    <button class="btn-login" onclick="login()">লগইন করুন</button>
+    
+    <div id="status"></div>
+
+    <div class="footer-text">
+        একাউন্ট নেই? <a href="sign.html">তৈরি করুন</a>
+    </div>
+</div>
+
+<script>
+    // ফায়ারবেজ কনফিগারেশন
+    const firebaseConfig = {
+        apiKey: "AIzaSyD_7v6rBHjVLHVK5OGiJpkgBzAuaJO8vn0",
+        authDomain: "boi-baz-v2.firebaseapp.com",
+        projectId: "boi-baz-v2",
+        storageBucket: "boi-baz-v2.firebasestorage.app",
+        messagingSenderId: "573343324145",
+        appId: "1:573343324145:web:42899dd75501af36985650"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function login() {
+        const nameInput = document.getElementById('loginName').value.trim();
+        const codeInput = document.getElementById('loginCode').value.trim();
+        const status = document.getElementById('status');
+
+        if (nameInput !== "" && codeInput.length === 6) {
+            status.style.color = "blue";
+            status.innerText = "যাচাই করা হচ্ছে...";
+
+            // ফায়ারস্টোর থেকে ডাটা চেক করা
+            db.collection("users").doc(codeInput).get().then((doc) => {
+                if (doc.exists) {
+                    const userData = doc.data();
+                    
+                    // নাম এবং কোড মিললে লগইন সফল
+                    if (userData.userName.toLowerCase() === nameInput.toLowerCase()) {
+                        localStorage.setItem("username", userData.userName);
+                        localStorage.setItem("usercode", userData.userCode);
+                        
+                        status.style.color = "green";
+                        status.innerText = "লগইন সফল! প্রবেশ করছেন...";
+
+                        setTimeout(() => {
+                            window.location.href = "index.html";
+                        }, 1200);
+                    } else {
+                        status.style.color = "red";
+                        status.innerText = "নামের বানান সঠিক নয়!";
+                    }
+                } else {
+                    status.style.color = "red";
+                    status.innerText = "এই কোড দিয়ে কোনো একাউন্ট পাওয়া যায়নি!";
+                }
+            }).catch((error) => {
+                status.style.color = "red";
+                status.innerText = "ত্রুটি: " + error.message;
+            });
+
+        } else {
+            status.style.color = "red";
+            status.innerText = "সঠিক নাম এবং ৬ সংখ্যার কোড দিন!";
+        }
+    }
+</script>
+
+</body>
+</html>

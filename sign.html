@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>একাউন্ট তৈরি করুন</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .sign-card { width: 330px; background: white; padding: 40px 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+        h2 { color: #0084ff; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; outline: none; font-size: 16px; }
+        input:focus { border-color: #0084ff; }
+        .btn-confirm { width: 100%; background: #28a745; color: white; border: none; padding: 14px; border-radius: 10px; font-size: 17px; cursor: pointer; font-weight: bold; }
+        #status { margin-top: 15px; font-size: 14px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="sign-card">
+    <h2>Messenger</h2>
+    <p style="color: #666; margin-bottom: 20px;">নতুন একাউন্ট তৈরি করুন</p>
+    
+    <input type="text" id="userName" placeholder="আপনার নাম (ইংরেজিতে)">
+    <input type="number" id="userCode" placeholder="৬ সংখ্যার ইউনিক কোড" oninput="if(this.value.length > 6) this.value = this.value.slice(0, 6);">
+    
+    <button class="btn-confirm" onclick="createAccount()">কনফার্ম করুন</button>
+    
+    <div id="status"></div>
+</div>
+
+<script>
+    // আপনার ফায়ারবেজ কনফিগারেশন
+    const firebaseConfig = {
+        apiKey: "AIzaSyD_7v6rBHjVLHVK5OGiJpkgBzAuaJO8vn0",
+        authDomain: "boi-baz-v2.firebaseapp.com",
+        projectId: "boi-baz-v2",
+        storageBucket: "boi-baz-v2.firebasestorage.app",
+        messagingSenderId: "573343324145",
+        appId: "1:573343324145:web:42899dd75501af36985650"
+    };
+
+    // ফায়ারবেজ ইনিশিয়ালাইজ
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore(); // Firestore ব্যবহার করছি
+
+    function createAccount() {
+        const name = document.getElementById('userName').value;
+        const code = document.getElementById('userCode').value;
+        const status = document.getElementById('status');
+
+        if (name.trim() !== "" && code.length === 6) {
+            status.style.color = "blue";
+            status.innerText = "অ্যাকাউন্ট তৈরি হচ্ছে...";
+
+            // Firestore-এ 'users' কালেকশনে তথ্য সেভ করা
+            db.collection("users").doc(code).set({
+                userName: name,
+                userCode: code,
+                joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+            })
+            .then(() => {
+                // ব্রাউজারের লোকাল মেমোরিতে নাম ও কোড সেভ রাখা
+                localStorage.setItem("username", name);
+                localStorage.setItem("usercode", code);
+                
+                status.style.color = "green";
+                status.innerText = "সফল হয়েছে! হোম পেজে নিয়ে যাওয়া হচ্ছে...";
+
+                // ১.৫ সেকেন্ড পর হোম পেজে পাঠানো
+                setTimeout(() => {
+                    window.location.href = "index.html";
+                }, 1500);
+            })
+            .catch((error) => {
+                status.style.color = "red";
+                status.innerText = "ভুল হয়েছে: " + error.message;
+            });
+
+        } else {
+            status.style.color = "red";
+            status.innerText = "সঠিক নাম এবং ৬ সংখ্যার কোড দিন!";
+        }
+    }
+</script>
+
+</body>
+</html>
