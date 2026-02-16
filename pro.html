@@ -4,103 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>প্রোফাইল</title>
-    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #fff; margin: 0; display: flex; justify-content: center; overflow-x: hidden; }
-        .pro-frame { width: 100%; max-width: 450px; min-height: 100vh; background: white; display: flex; flex-direction: column; align-items: center; position: relative; }
-        
-        /* মেসেঞ্জার থিম হেডার */
-        .top-bar { width: 100%; height: 60px; background: #fff; display: flex; align-items: center; padding: 0 15px; box-sizing: border-box; justify-content: space-between; }
-        .back-btn { color: #0084ff; text-decoration: none; font-size: 28px; cursor: pointer; }
-        .header-title { font-size: 20px; font-weight: bold; color: #000; }
-
-        /* প্রোফাইল ডিসপ্লে */
-        .profile-header { margin-top: 20px; text-align: center; width: 100%; }
-        .avatar-container { position: relative; width: 120px; height: 120px; margin: 0 auto 15px; }
-        .avatar-main { width: 120px; height: 120px; background: #0084ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 50px; overflow: hidden; border: 2px solid #f0f2f5; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #fff; margin: 0; display: flex; justify-content: center; }
+        .pro-frame { width: 100%; max-width: 450px; min-height: 100vh; background: white; display: flex; flex-direction: column; align-items: center; }
+        .top-bar { width: 100%; height: 60px; display: flex; align-items: center; padding: 0 15px; border-bottom: 1px solid #efefef; }
+        .back-btn { color: #0084ff; text-decoration: none; font-size: 28px; cursor: pointer; border:none; background:none; }
+        .avatar-main { width: 120px; height: 120px; background: #0084ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 50px; overflow: hidden; position: relative; margin: 20px 0; }
         .avatar-main img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .cam-icon { position: absolute; bottom: 5px; right: 5px; background: #fff; border-radius: 50%; padding: 7px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); display: none; font-size: 18px; }
-
-        .user-name { font-size: 24px; font-weight: bold; color: #000; margin-bottom: 5px; }
-        .info-text { font-size: 15px; color: #65676b; margin: 3px 0; }
-
-        /* মেনু স্টাইল */
-        .menu-list { width: 90%; margin-top: 30px; }
-        .menu-item { padding: 12px 15px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; cursor: pointer; transition: 0.2s; background: #f0f2f5; }
-        .menu-item:hover { background: #e4e6eb; }
-        .menu-item span { font-size: 16px; color: #050505; font-weight: 500; }
-        
-        /* এডিট সেকশন */
-        .edit-area { display: none; width: 90%; margin-top: 15px; background: #f9f9f9; padding: 15px; border-radius: 12px; border: 1px solid #ddd; }
-        input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; outline: none; }
-        input:focus { border-color: #0084ff; }
-        .save-btn { background: #0084ff; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; font-size: 16px; }
-
-        /* নোটিফিকেশন বার */
-        #notif-bar { 
-            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 400px; background: #0084ff; color: white;
-            padding: 12px 15px; border-radius: 15px; display: flex; align-items: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1000;
-            transition: top 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-            cursor: pointer; user-select: none;
-        }
-        #notif-bar.show { top: 20px; }
-        .notif-img { width: 40px; height: 40px; border-radius: 50%; background: #fff; margin-right: 12px; overflow: hidden; flex-shrink: 0; }
-        .notif-img img { width: 100%; height: 100%; object-fit: cover; }
-        .notif-content { flex: 1; }
-        .notif-title { font-weight: bold; font-size: 14px; }
-        .notif-text { font-size: 13px; opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+        .cam-icon { position: absolute; bottom: 5px; right: 5px; background: #fff; border-radius: 50%; padding: 7px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); display: none; }
+        .menu-list { width: 90%; margin-top: 20px; }
+        .menu-item { padding: 15px; border-radius: 10px; background: #f0f2f5; margin-bottom: 10px; cursor: pointer; display: flex; justify-content: space-between; }
+        .edit-area { display: none; width: 90%; background: #f9f9f9; padding: 15px; border-radius: 12px; border: 1px solid #ddd; margin-top: 10px; }
+        input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        .save-btn { background: #0084ff; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="notif-bar" onclick="goToChat()" onmousedown="startSwipe(event)" ontouchstart="startSwipe(event)">
-    <div class="notif-img" id="notifImg">?</div>
-    <div class="notif-content">
-        <div class="notif-title" id="notifSender">নতুন মেসেজ</div>
-        <div class="notif-text" id="notifMsg">মেসেজ লোড হচ্ছে...</div>
-    </div>
-</div>
-
 <div class="pro-frame">
     <div class="top-bar">
-        <a href="index.html" class="back-btn">‹</a>
-        <div class="header-title">Me</div>
-        <div style="width: 28px;"></div>
+        <button class="back-btn" onclick="goBack()">‹</button>
+        <span style="margin-left:15px; font-weight:bold;">প্রোফাইল</span>
     </div>
 
-    <div class="profile-header">
-        <div class="avatar-container">
-            <div class="avatar-main" id="picBox"><span id="initials">?</span></div>
-            <label for="imgInput" class="cam-icon" id="camBtn">📷</label>
-            <input type="file" id="imgInput" style="display:none" accept="image/*" onchange="uploadImage(this)">
-        </div>
-        <h2 class="user-name" id="dispName">নাম লোড হচ্ছে...</h2>
-        <div class="info-text" id="dispEmail">ইমেইল লোড হচ্ছে...</div>
-        <div class="info-text" id="dispPhone">ফোন নম্বর লোড হচ্ছে...</div>
+    <div class="avatar-main" id="picBox">
+        <span id="initials">?</span>
+        <label for="imgInput" class="cam-icon" id="camBtn">📷</label>
+        <input type="file" id="imgInput" style="display:none" accept="image/*" onchange="uploadImage(this)">
     </div>
+    
+    <h2 id="dispName">...</h2>
+    <p id="dispEmail" style="color:#65676b;"></p>
 
     <div class="menu-list">
         <div class="menu-item" onclick="enableEditMode()">
-            <span>প্রোফাইল এডিট করুন</span>
-            <span>✏️</span>
+            <span>এডিট প্রোফাইল</span> ✏️
         </div>
-
         <div id="editArea" class="edit-area">
             <input type="text" id="newName" placeholder="নতুন নাম">
             <input type="email" id="newEmail" placeholder="নতুন ইমেইল">
-            <input type="text" id="newPhone" placeholder="নতুন ফোন নম্বর">
             <button class="save-btn" onclick="saveChanges()">সেভ করুন</button>
         </div>
-
-        <div class="menu-item" style="margin-top: 20px;" onclick="logout()">
-            <span style="color: #fa3e3e;">লগ আউট</span>
-            <span>↪️</span>
+        <div class="menu-item" style="color:red;" onclick="logout()">
+            <span>লগ আউট</span> ↪️
         </div>
     </div>
 </div>
@@ -116,103 +64,46 @@
     const db = firebase.firestore();
     const myCode = localStorage.getItem("usercode");
 
-    let currentNotifChat = "";
+    function updatePresence(status) {
+        if(myCode) db.collection("users").doc(myCode).update({ status: status, currentChat: '' });
+    }
 
-    window.onload = function() {
-        if(!myCode) { window.location.href="login.html"; return; }
-        
-        // প্রোফাইল ডাটা লোড
+    window.onload = () => {
+        updatePresence('online');
         db.collection("users").doc(myCode).onSnapshot(doc => {
-            if(doc.exists) {
-                const d = doc.data();
-                document.getElementById('dispName').innerText = d.userName;
-                document.getElementById('dispEmail').innerText = d.userEmail || "ইমেইল যোগ করা হয়নি";
-                document.getElementById('dispPhone').innerText = d.phone || "ফোন যোগ করা হয়নি";
-                document.getElementById('initials').innerText = d.userName.charAt(0).toUpperCase();
-                if(d.profilePic) document.getElementById('picBox').innerHTML = `<img src="${d.profilePic}">`;
-            }
-        });
-
-        listenForMessages();
-    }
-
-    // মেসেজ নোটিফিকেশন লজিক
-    function listenForMessages() {
-        db.collection("chats").where("receiverCode", "==", myCode)
-        .onSnapshot(snapshot => {
-            snapshot.docChanges().forEach(change => {
-                if (change.type === "modified") {
-                    const data = change.doc.data();
-                    showNotification(data);
-                }
-            });
+            const d = doc.data();
+            document.getElementById('dispName').innerText = d.userName;
+            document.getElementById('dispEmail').innerText = d.userEmail || "";
+            document.getElementById('initials').innerText = d.userName.charAt(0).toUpperCase();
+            if(d.profilePic) document.getElementById('picBox').innerHTML += `<img src="${d.profilePic}">`;
         });
     }
 
-    function showNotification(data) {
-        const bar = document.getElementById('notif-bar');
-        document.getElementById('notifSender').innerText = data.senderName;
-        document.getElementById('notifMsg').innerText = data.lastMsg;
-        currentNotifChat = { name: data.senderName, code: data.senderCode };
-
-        bar.classList.add('show');
-        
-        // ৫ সেকেন্ড পর অটো গায়েব
-        setTimeout(() => { bar.classList.remove('show'); }, 5000);
-    }
-
-    function goToChat() {
-        localStorage.setItem("chatTargetName", currentNotifChat.name);
-        localStorage.setItem("chatTargetCode", currentNotifChat.code);
-        window.location.href = "mass.html";
-    }
-
-    // এডিট মোড চালু করা
-    function enableEditMode() {
-        document.getElementById('editArea').style.display = "block";
-        document.getElementById('camBtn').style.display = "block";
+    function goBack() { window.location.href = "index.html"; }
+    function enableEditMode() { 
+        document.getElementById('editArea').style.display = 'block'; 
+        document.getElementById('camBtn').style.display = 'block';
     }
 
     function uploadImage(input) {
-        const file = input.files[0];
         const reader = new FileReader();
-        reader.onloadend = () => {
-            db.collection("users").doc(myCode).update({ profilePic: reader.result });
-            alert("ছবি আপলোড হয়েছে!");
-        }
-        if(file) reader.readAsDataURL(file);
+        reader.onload = (e) => db.collection("users").doc(myCode).update({ profilePic: e.target.result });
+        reader.readAsDataURL(input.files[0]);
     }
 
     function saveChanges() {
         const n = document.getElementById('newName').value;
         const e = document.getElementById('newEmail').value;
-        const p = document.getElementById('newPhone').value;
         let obj = {};
         if(n) { obj.userName = n; localStorage.setItem("username", n); }
         if(e) obj.userEmail = e;
-        if(p) obj.phone = p;
-
-        db.collection("users").doc(myCode).update(obj).then(() => {
-            alert("তথ্য আপডেট হয়েছে!");
-            document.getElementById('editArea').style.display = "none";
-            document.getElementById('camBtn').style.display = "none";
-        });
+        db.collection("users").doc(myCode).update(obj).then(() => location.reload());
     }
 
-    function logout() { localStorage.clear(); window.location.href="login.html"; }
-
-    // সোয়াইপ করে নোটিফিকেশন সরানো
-    let startX = 0;
-    function startSwipe(e) {
-        startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-        document.onmousemove = document.ontouchmove = (ev) => {
-            let currentX = ev.type === 'touchmove' ? ev.touches[0].clientX : ev.clientX;
-            if (currentX - startX > 100) { // ডানে ১০০ পিক্সেল টানলে
-                document.getElementById('notif-bar').classList.remove('show');
-                document.onmousemove = document.ontouchmove = null;
-            }
-        };
-        document.onmouseup = document.ontouchend = () => { document.onmousemove = document.ontouchmove = null; };
+    function logout() { 
+        updatePresence('offline');
+        localStorage.clear(); 
+        window.location.href="login.html"; 
     }
 </script>
 </body>
