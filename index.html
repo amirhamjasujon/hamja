@@ -112,10 +112,22 @@
     const myCode = localStorage.getItem("usercode");
     const myName = localStorage.getItem("username");
 
-    // --- স্মার্ট অনলাইন/অফলাইন লজিক ---
+    // --- ব্যাক বাটন ফিক্স: হিস্ট্রি ক্লিন করা ---
+    function fixHistory() {
+        // এই পেজে আসা মাত্রই হিস্ট্রি স্ট্যাক এমনভাবে সেট করো যেন ব্যাক চাপলে অ্যাপ বন্ধ হয়
+        window.history.pushState(null, "", window.location.href);
+        window.onpopstate = function() {
+            // যখন ইউজার মোবাইলের ব্যাক বাটন চাপবে
+            setOffline();
+            // ইউজারকে অ্যাপ থেকে বের করে দেওয়ার জন্য একটি ভুয়া স্টেট দিয়ে ব্রাউজারকে আটকানো
+            window.history.pushState(null, "", window.location.href);
+            // এখানে আপনি চাইলে ইউজারকে মেসেজ দিতে পারেন অথবা সরাসরি ক্লোজ করার চেষ্টা করতে পারেন
+            // ব্রাউজার সরাসরি উইন্ডো ক্লোজ করতে দেয় না, তবে হিস্ট্রি না থাকলে ইউজার হোম পেজে চলে যায়।
+        };
+    }
+
     function setOnline() {
         if (!myCode) return;
-        // অন্য কোনো পেজ থেকে আসা অফলাইন টাইমার বন্ধ করে দাও
         const pendingTimer = localStorage.getItem('offTimerId');
         if (pendingTimer) {
             clearTimeout(Number(pendingTimer));
@@ -131,43 +143,46 @@
 
     function setOffline() {
         if (!myCode) return;
-        // সাথে সাথে অফলাইন না করে ৩ সেকেন্ড সময় নেবে
+        // ৩ সেকেন্ড অপেক্ষা না করে সরাসরি অফলাইন আপডেট করার চেষ্টা (ব্রাউজার বন্ধের ক্ষেত্রে কার্যকর)
+        db.collection("users").doc(myCode).update({ status: 'offline' });
+    }
+
+    // স্মার্ট অফলাইন (টাইমারসহ)
+    function smartOffline() {
+        if (!myCode) return;
         const timerId = setTimeout(() => {
             db.collection("users").doc(myCode).update({ status: 'offline' });
         }, 3000); 
-        
-        // এই টাইমার আইডিটি সেভ করো যেন নতুন পেজে গিয়ে এটি থামানো যায়
         localStorage.setItem('offTimerId', timerId);
     }
 
     window.onload = function() {
+        fixHistory(); // ব্যাক বাটন কন্ট্রোল চালু
         if (myCode && myName) {
             document.getElementById('view-p1').classList.add('hidden');
             document.getElementById('view-p2').classList.remove('hidden');
             document.getElementById('loginLabel').classList.add('hidden');
             document.getElementById('profileLink').href = "pro.html";
             
-            setOnline(); // পেজ লোড হলে অনলাইন করো
+            setOnline();
             loadMyProfile();
             loadChatHistory();
         }
     }
 
-    // পেজ থেকে বের হওয়ার সময় (ক্লিক করে অন্য পেজে গেলে বা রিফ্রেশ করলে)
-    window.onbeforeunload = function() {
-        setOffline();
-    };
+    // মোবাইলের জন্য সবথেকে কার্যকর ইভেন্ট
+    window.addEventListener('pagehide', setOffline);
+    window.addEventListener('beforeunload', setOffline);
 
-    // অ্যাপ মিনিমাইজ করলে বা অন্য অ্যাপে গেলে
     document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === 'hidden') {
-            setOffline();
+            smartOffline();
         } else {
             setOnline();
         }
     });
 
-    // --- প্রোফাইল ও চ্যাট লোডিং ফাংশন ---
+    // --- চ্যাট ও প্রোফাইল ফাংশন ---
     function loadMyProfile() {
         db.collection("users").doc(myCode).onSnapshot(doc => {
             if (doc.exists && doc.data().profilePic) {
@@ -215,11 +230,13 @@
         div.onclick = () => {
             localStorage.setItem("chatTargetName", name);
             localStorage.setItem("chatTargetCode", code);
-            window.location.href = "mass.html";
+            // location.href এর বদলে replace ব্যবহার করুন যেন ব্যাক লুপ না হয়
+            window.location.replace("mass.html");
         };
         document.getElementById('chatList').prepend(div);
     }
 
+    // সার্চ ফাংশন ঠিক আগের মতোই কাজ করবে...
     function handleSearch() {
         const query = document.getElementById('searchBox').value.trim();
         const resultsDiv = document.getElementById('searchResults');
@@ -252,7 +269,7 @@
         div.onclick = () => {
             localStorage.setItem("chatTargetName", name);
             localStorage.setItem("chatTargetCode", code);
-            window.location.href = "mass.html";
+            window.location.replace("mass.html");
         };
         resultsDiv.appendChild(div);
     }
