@@ -22,7 +22,6 @@
         
         .app-frame { width: 100%; max-width: 500px; height: 100vh; display: flex; flex-direction: column; background: white; }
         
-        /* হেডার স্টাইল - লোগো সহ */
         header { 
             padding: 10px 20px; 
             display: flex; 
@@ -113,27 +112,62 @@
     const myCode = localStorage.getItem("usercode");
     const myName = localStorage.getItem("username");
 
+    // --- স্মার্ট অনলাইন/অফলাইন লজিক ---
+    function setOnline() {
+        if (!myCode) return;
+        // অন্য কোনো পেজ থেকে আসা অফলাইন টাইমার বন্ধ করে দাও
+        const pendingTimer = localStorage.getItem('offTimerId');
+        if (pendingTimer) {
+            clearTimeout(Number(pendingTimer));
+            localStorage.removeItem('offTimerId');
+        }
+        
+        db.collection("users").doc(myCode).update({
+            status: 'online',
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+            currentChat: ''
+        });
+    }
+
+    function setOffline() {
+        if (!myCode) return;
+        // সাথে সাথে অফলাইন না করে ৩ সেকেন্ড সময় নেবে
+        const timerId = setTimeout(() => {
+            db.collection("users").doc(myCode).update({ status: 'offline' });
+        }, 3000); 
+        
+        // এই টাইমার আইডিটি সেভ করো যেন নতুন পেজে গিয়ে এটি থামানো যায়
+        localStorage.setItem('offTimerId', timerId);
+    }
+
     window.onload = function() {
         if (myCode && myName) {
             document.getElementById('view-p1').classList.add('hidden');
             document.getElementById('view-p2').classList.remove('hidden');
             document.getElementById('loginLabel').classList.add('hidden');
             document.getElementById('profileLink').href = "pro.html";
-            updateMyPresence();
+            
+            setOnline(); // পেজ লোড হলে অনলাইন করো
             loadMyProfile();
             loadChatHistory();
         }
     }
 
-    function updateMyPresence() {
-        db.collection("users").doc(myCode).update({ 
-            status: 'online', 
-            lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
-            currentChat: '' // হোমপেজে থাকলে চ্যাট আইডি খালি থাকবে
-        });
-        window.addEventListener('beforeunload', () => db.collection("users").doc(myCode).update({ status: 'offline' }));
-    }
+    // পেজ থেকে বের হওয়ার সময় (ক্লিক করে অন্য পেজে গেলে বা রিফ্রেশ করলে)
+    window.onbeforeunload = function() {
+        setOffline();
+    };
 
+    // অ্যাপ মিনিমাইজ করলে বা অন্য অ্যাপে গেলে
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === 'hidden') {
+            setOffline();
+        } else {
+            setOnline();
+        }
+    });
+
+    // --- প্রোফাইল ও চ্যাট লোডিং ফাংশন ---
     function loadMyProfile() {
         db.collection("users").doc(myCode).onSnapshot(doc => {
             if (doc.exists && doc.data().profilePic) {
@@ -143,7 +177,6 @@
     }
 
     function loadChatHistory() {
-        // চ্যাট হিস্ট্রি রিয়েল-টাইম লোড
         db.collection("chats").where("receiverCode", "==", myCode).onSnapshot(s => s.forEach(doc => fetchUser(doc.data().senderCode, doc.data().lastMsg)));
         db.collection("chats").where("senderCode", "==", myCode).onSnapshot(s => s.forEach(doc => fetchUser(doc.data().receiverCode, "You: " + doc.data().lastMsg)));
     }
@@ -191,16 +224,9 @@
         const query = document.getElementById('searchBox').value.trim();
         const resultsDiv = document.getElementById('searchResults');
         const chatListDiv = document.getElementById('chatList');
-
-        if (!query) { 
-            resultsDiv.classList.add('hidden'); 
-            chatListDiv.classList.remove('hidden');
-            return; 
-        }
-        
+        if (!query) { resultsDiv.classList.add('hidden'); chatListDiv.classList.remove('hidden'); return; }
         chatListDiv.classList.add('hidden');
         resultsDiv.classList.remove('hidden');
-        
         db.collection("users").where("userName", ">=", query).where("userName", "<=", query + "\uf8ff").get().then(snap => {
             resultsDiv.innerHTML = "<p style='padding:10px; font-size:12px; color:#65676b;'>সার্চ রেজাল্ট</p>";
             snap.forEach(doc => {
@@ -213,12 +239,10 @@
         const resultsDiv = document.getElementById('searchResults');
         const div = document.createElement('div');
         div.className = 'user-item';
-        let isOnline = (status === 'online');
-        
         div.innerHTML = `
             <div class="avatar-wrapper">
                 <div class="avatar">${pic ? `<img src="${pic}">` : name.charAt(0).toUpperCase()}</div>
-                ${isOnline ? '<div class="online-dot"></div>' : ''}
+                ${status === 'online' ? '<div class="online-dot"></div>' : ''}
             </div>
             <div class="user-details">
                 <p class="user-name">${name}</p>
