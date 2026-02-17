@@ -2,55 +2,77 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Chatting...</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0084ff">
-
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-  }
-</script>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; display: flex; justify-content: center; }
-        .app-frame { width: 100%; max-width: 450px; height: 100vh; background: #fff; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        * { box-sizing: border-box; }
+        body, html { 
+            margin: 0; padding: 0; height: 100%; 
+            overflow: hidden; 
+            background: #f0f2f5; font-family: 'Segoe UI', sans-serif;
+        }
+
+        .app-frame { 
+            width: 100%; max-width: 450px; 
+            height: 100vh; 
+            display: flex; flex-direction: column; 
+            background: #fff; margin: 0 auto;
+            position: relative;
+        }
         
-        header { padding: 10px 15px; background: #fff; border-bottom: 1px solid #efefef; display: flex; align-items: center; position: sticky; top: 0; z-index: 100; }
-        .back-btn { font-size: 26px; cursor: pointer; color: #0084ff; text-decoration: none; margin-right: 12px; border: none; background: none; outline: none; }
-        .target-pic { width: 40px; height: 40px; border-radius: 50%; background: #0084ff; overflow: hidden; margin-right: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+        header { 
+            height: 60px; padding: 0 15px; 
+            background: #fff; border-bottom: 1px solid #efefef; 
+            display: flex; align-items: center; 
+            flex-shrink: 0; z-index: 100;
+        }
+        .back-btn { font-size: 28px; cursor: pointer; color: #0084ff; text-decoration: none; border: none; background: none; margin-right: 10px; }
+        .target-pic { width: 40px; height: 40px; border-radius: 50%; background: #0084ff; overflow: hidden; margin-right: 10px; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0; }
         .target-pic img { width: 100%; height: 100%; object-fit: cover; }
-        .chat-user-info { flex: 1; display: flex; flex-direction: column; }
-        .chat-user-name { font-size: 16px; font-weight: bold; color: #050505; }
+        .chat-user-info { flex: 1; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+        .chat-user-name { font-size: 16px; font-weight: bold; color: #050505; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .status-text { font-size: 11px; font-weight: 500; color: #65676b; }
 
-        #chatBox { flex: 1; padding: 15px; overflow-y: auto; background: #fff; display: flex; flex-direction: column; }
-        .msg-wrapper { display: flex; margin-bottom: 12px; align-items: flex-end; width: 100%; position: relative; }
+        #chatBox { 
+            flex: 1; padding: 15px; 
+            overflow-y: auto; 
+            background: #fff; display: flex; flex-direction: column;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .msg-wrapper { display: flex; margin-bottom: 12px; align-items: flex-end; width: 100%; }
         .msg-wrapper.sent { flex-direction: row-reverse; }
-        
-        .msg-bubble { max-width: 65%; padding: 10px 14px; border-radius: 18px; font-size: 15px; line-height: 1.4; word-wrap: break-word; cursor: pointer; user-select: none; }
+        .msg-bubble { max-width: 70%; padding: 10px 14px; border-radius: 18px; font-size: 15px; line-height: 1.4; word-wrap: break-word; position: relative; }
         .sent .msg-bubble { background: #0084ff; color: white; border-bottom-right-radius: 4px; }
         .received .msg-bubble { background: #e4e6eb; color: #050505; border-bottom-left-radius: 4px; }
 
-        .seen-icon { width: 14px; height: 14px; border-radius: 50%; margin-top: 2px; overflow: hidden; display: none; }
+        .seen-icon { width: 14px; height: 14px; border-radius: 50%; margin: 0 5px 2px; overflow: hidden; flex-shrink: 0; }
         .seen-icon img { width: 100%; height: 100%; object-fit: cover; }
 
-        .input-area { padding: 10px 15px; border-top: 1px solid #efefef; display: flex; align-items: center; background: #fff; gap: 10px; }
-        #messageInput { flex: 1; padding: 10px 15px; border: none; background: #f0f2f5; border-radius: 20px; outline: none; }
-        
-        .delete-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .delete-card { background: white; padding: 20px; border-radius: 12px; text-align: center; width: 250px; }
-        .del-btn { background: #fa3e3e; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .input-area { 
+            padding: 10px 15px; border-top: 1px solid #efefef; 
+            display: flex; align-items: center; background: #fff; 
+            gap: 10px; flex-shrink: 0;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        #messageInput { flex: 1; padding: 12px 15px; border: none; background: #f0f2f5; border-radius: 25px; outline: none; font-size: 15px; }
+        .send-btn { background: none; border: none; color: #0084ff; font-size: 24px; cursor: pointer; }
+
+        .delete-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .delete-card { background: white; padding: 20px; border-radius: 15px; text-align: center; width: 260px; }
+        .del-btn { background: #fa3e3e; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 15px; width: 100%; }
     </style>
 </head>
 <body>
 
 <div class="delete-overlay" id="delOverlay" onclick="this.style.display='none'">
     <div class="delete-card" onclick="event.stopPropagation()">
-        <p>এই মেসেজটি ডিলিট করতে চান?</p>
-        <button class="del-btn" id="confirmDelBtn">Delete</button>
+        <p style="margin:0; font-weight:bold;">মেসেজটি ডিলিট করবেন?</p>
+        <button class="del-btn" id="confirmDelBtn">Delete for everyone</button>
     </div>
 </div>
 
@@ -60,7 +82,7 @@
         <div class="target-pic" id="headerPic">?</div>
         <div class="chat-user-info">
             <span class="chat-user-name" id="targetName">...</span>
-            <span class="status-text" id="statusLabel">Offline</span>
+            <span class="status-text" id="statusLabel">offline</span>
         </div>
     </header>
 
@@ -68,7 +90,7 @@
 
     <div class="input-area">
         <input type="text" id="messageInput" placeholder="Aa" autocomplete="off" oninput="handleTyping()">
-        <button style="background:none; border:none; color:#0084ff; font-size:24px; cursor:pointer;" onclick="sendMessage()">➤</button>
+        <button class="send-btn" onclick="sendMessage()">➤</button>
     </div>
 </div>
 
@@ -91,27 +113,76 @@
     let typingTimer;
     let holdTimer;
 
-    function goBack() {
-        updatePresence('offline', '');
-        window.location.href = "index.html";
-    }
+    // --- স্মার্ট অনলাইন/অফলাইন লজিক ---
+    function setOnline() {
+        if (!myCode) return;
+        
+        // পেন্ডিং অফলাইন টাইমার থাকলে সেটা বন্ধ করো
+        const pendingTimer = localStorage.getItem('offTimerId');
+        if (pendingTimer) {
+            clearTimeout(parseInt(pendingTimer));
+            localStorage.removeItem('offTimerId');
+        }
 
-    function updatePresence(status, loc) {
-        if(!myCode) return;
         db.collection("users").doc(myCode).update({ 
-            status: status, 
-            currentChat: loc,
+            status: 'online', 
+            currentChat: chatId,
             lastSeen: firebase.firestore.FieldValue.serverTimestamp()
         });
     }
 
+    function setOffline() {
+        if (!myCode) return;
+        
+        // সাথে সাথে অফলাইন না করে ৩ সেকেন্ড অপেক্ষা করো
+        const timerId = setTimeout(() => {
+            db.collection("users").doc(myCode).update({ 
+                status: 'offline',
+                currentChat: '',
+                typingWith: ""
+            });
+            localStorage.removeItem('offTimerId');
+        }, 3000); 
+
+        localStorage.setItem('offTimerId', timerId);
+    }
+
     window.onload = () => {
-        updatePresence('online', chatId);
+        setOnline();
         loadMessages();
     };
 
-    // ৩. বন্ধুর তথ্য, টাইপিং এবং লাস্ট সিন লজিক
+    // পেজ ছেড়ে যাওয়ার সময়
+    window.addEventListener('beforeunload', setOffline);
+
+    // মিনিমাইজ করলে বা অন্য অ্যাপে গেলে
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === 'hidden') {
+            setOffline();
+        } else {
+            setOnline();
+        }
+    });
+
+    function goBack() {
+        // ব্যাক বাটনে ক্লিক করলেও সরাসরি অফলাইন হবে না, পেন্ডিং স্ট্যাটাসে থাকবে
+        setOffline();
+        window.location.href = "index.html";
+    }
+
+    // --- বাকি ফাংশনগুলো ---
+
+    function formatTime(date) {
+        let hours = date.getHours();
+        let minutes = date.getMinutes();
+        let ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        minutes = minutes < 10 ? '0'+minutes : minutes;
+        return hours + ':' + minutes + ' ' + ampm;
+    }
+
     db.collection("users").doc(targetCode).onSnapshot(doc => {
+        if(!doc.exists) return;
         const data = doc.data();
         document.getElementById('targetName').innerText = data.userName;
         targetPic = data.profilePic || "";
@@ -119,30 +190,19 @@
 
         const statusLabel = document.getElementById('statusLabel');
         
-        // টাইপিং চেক (সবার আগে)
         if (data.typingWith === myCode) {
             statusLabel.innerText = "typing...";
             statusLabel.style.color = "#0084ff";
+        } else if (data.status === 'online') {
+            statusLabel.innerText = data.currentChat === chatId ? "active on your page" : "active on another page";
+            statusLabel.style.color = "#31a24c";
         } else {
-            // অনলাইন/অফলাইন এবং পেজ স্ট্যাটাস চেক
-            if (data.status === 'online') {
-                if (data.currentChat === chatId) {
-                    statusLabel.innerText = "● Active on your page";
-                    statusLabel.style.color = "#31a24c";
-                } else {
-                    statusLabel.innerText = "● Active on another page";
-                    statusLabel.style.color = "#0084ff";
-                }
-            } else {
-                // লাস্ট সিন লজিক
-                let lastSeenTime = "Offline";
-                if(data.lastSeen) {
-                    const date = data.lastSeen.toDate();
-                    lastSeenTime = "Last seen: " + date.getHours() + ":" + (date.getMinutes()<10?'0':'') + date.getMinutes();
-                }
-                statusLabel.innerText = lastSeenTime;
-                statusLabel.style.color = "#65676b";
+            let lastSeenStr = "offline";
+            if(data.lastSeen) {
+                lastSeenStr = "last seen: " + formatTime(data.lastSeen.toDate());
             }
+            statusLabel.innerText = lastSeenStr;
+            statusLabel.style.color = "#65676b";
         }
     });
 
@@ -150,7 +210,7 @@
         db.collection("users").doc(myCode).update({ typingWith: targetCode });
         clearTimeout(typingTimer);
         typingTimer = setTimeout(() => {
-            db.collection("users").doc(myCode).update({ typingWith: "" });
+            db.collection("users").doc(myCode).update({ typingWith: "" })
         }, 2000);
     }
 
@@ -174,17 +234,19 @@
                 bubble.className = "msg-bubble";
                 bubble.innerText = data.text;
 
-                bubble.onmousedown = bubble.ontouchstart = () => {
-                    holdTimer = setTimeout(() => showDeleteOption(doc.id), 1000);
-                };
-                bubble.onmouseup = bubble.ontouchend = () => clearTimeout(holdTimer);
+                const startHold = () => holdTimer = setTimeout(() => showDeleteOption(doc.id), 800);
+                const endHold = () => clearTimeout(holdTimer);
+
+                bubble.onmousedown = startHold;
+                bubble.onmouseup = endHold;
+                bubble.ontouchstart = startHold;
+                bubble.ontouchend = endHold;
 
                 wrap.appendChild(bubble);
 
                 if(isMe && data.seen) {
                     const seenIcon = document.createElement('div');
                     seenIcon.className = "seen-icon";
-                    seenIcon.style.display = "block";
                     seenIcon.innerHTML = targetPic ? `<img src="${targetPic}">` : "";
                     wrap.appendChild(seenIcon);
                 }
@@ -202,7 +264,11 @@
             senderCode: myCode, text: text, seen: false,
             time: firebase.firestore.FieldValue.serverTimestamp()
         });
-        db.collection("chats").doc(chatId).set({ lastMsg: text, receiverCode: targetCode, senderCode: myCode });
+        db.collection("chats").doc(chatId).set({ 
+            lastMsg: text, receiverCode: targetCode, 
+            senderCode: myCode, senderName: myName, receiverName: localStorage.getItem("chatTargetName"),
+            time: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
         input.value = "";
         db.collection("users").doc(myCode).update({ typingWith: "" });
     }
