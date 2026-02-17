@@ -135,26 +135,26 @@
         });
     }
 
-   function setOffline() {
+   // index.html এর জন্য আপডেট
+function setOffline() {
     if (!myCode) return;
     
-    // ৩ সেকেন্ডের জায়গায় ৫ সেকেন্ড করুন, যাতে এক পেজ থেকে অন্য পেজে যাওয়ার সময় স্ট্যাটাস না কাটে
+    // ৫ সেকেন্ড ডিলে দিন যাতে পেজ পরিবর্তনের সময় অফলাইন না দেখায়
     const timerId = setTimeout(() => {
         db.collection("users").doc(myCode).update({ 
             status: 'offline',
             lastSeen: firebase.firestore.FieldValue.serverTimestamp()
         });
-    }, 5000); 
+        localStorage.removeItem('offTimerId');
+    }, 3000); 
     localStorage.setItem('offTimerId', timerId);
 }
 
-    // পেজ নেভিগেশন (replace ব্যবহার করে হিস্ট্রি লুপ কমানো)
-    function navigateTo(url) {
-        setOffline();
-        setTimeout(() => {
-            window.location.replace(url);
-        }, 100);
-    }
+// এই ফাংশনটি আপডেট করুন (অফলাইন কল সরিয়ে দিন)
+function navigateTo(url) {
+    // সরাসরি নেভিগেট করুন, অফলাইন হওয়ার দরকার নেই কারণ আপনি অ্যাপেই আছেন
+    window.location.href = url; 
+}
 
     window.onload = function() {
         initBackControl();
@@ -173,10 +173,16 @@
     // মোবাইল এবং পিসির সব ব্যাকগ্রাউন্ড ইভেন্ট হ্যান্ডল করা
     window.addEventListener('pagehide', setOffline);
     window.addEventListener('beforeunload', setOffline);
-    document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === 'hidden') setOffline();
-        else setOnline();
-    });
+   // উভয় পেজের জন্যই এই লজিকটি ব্যবহার করুন
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === 'hidden') {
+        // ইউজার যখন হোম বাটন চাপে তখন এটি কাজ করবে
+        setOffline();
+    } else {
+        // ইউজার যখন আবার অ্যাপে ফিরে আসে
+        setOnline();
+    }
+});
 
     // --- ডাটা ফাংশনস ---
     function loadMyProfile() {
