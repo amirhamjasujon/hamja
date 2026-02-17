@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Messenger - Home</title>
+    <link rel="icon" type="image/png" href="logo.png">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0084ff">
 
@@ -135,20 +136,18 @@
         });
     }
 
-   // index.html এর জন্য আপডেট
-function setOffline() {
-    if (!myCode) return;
-    
-    // ৫ সেকেন্ড ডিলে দিন যাতে পেজ পরিবর্তনের সময় অফলাইন না দেখায়
-    const timerId = setTimeout(() => {
-        db.collection("users").doc(myCode).update({ 
-            status: 'offline',
-            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        localStorage.removeItem('offTimerId');
-    }, 3000); 
-    localStorage.setItem('offTimerId', timerId);
-}
+
+    function setOffline() {
+        if (!myCode) return;
+        const timerId = setTimeout(() => {
+            db.collection("users").doc(myCode).update({ 
+                status: 'offline', currentChat: '', typingWith: ""
+            });
+            localStorage.removeItem('offTimerId');
+        }, 3000); // ৩ সেকেন্ড ডিলে
+        localStorage.setItem('offTimerId', timerId);
+    }
+
 
 // এই ফাংশনটি আপডেট করুন (অফলাইন কল সরিয়ে দিন)
 function navigateTo(url) {
