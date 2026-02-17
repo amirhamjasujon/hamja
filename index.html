@@ -108,13 +108,17 @@
     const myName = localStorage.getItem("username");
 
     // --- ব্যাক বাটন কন্ট্রোল (অ্যাপ থেকে বের হওয়ার জন্য) ---
-    function initBackControl() {
-        window.history.pushState(null, null, window.location.href);
-        window.onpopstate = function() {
-            // ব্যাক বাটন চাপলে কোনো অ্যাকশন না নিয়ে সেখানেই থাকবে বা অ্যাপ ক্লোজ হবে
-            window.history.pushState(null, null, window.location.href);
-        };
-    }
+   function initBackControl() {
+    // এটি ২ বার পুশ করুন যাতে ব্যাক বাটন চাপলে ব্রাউজার হিস্ট্রি শেষ হয়ে যায়
+    window.history.pushState({page: 1}, "", "");
+    window.history.pushState({page: 2}, "", "");
+
+    window.onpopstate = function(event) {
+        // ব্যাক বাটন চাপলে এটি কাজ করবে। আমরা ইউজারকে মেসেজ দেব বা হোমেই আটকে রাখব।
+        window.history.pushState({page: 2}, "", "");
+        // চাইলে এখানে একটি কনফার্মেশন পপআপ দিতে পারেন "আপনি কি অ্যাপ থেকে বের হতে চান?"
+    };
+}
 
     // --- স্মার্ট অনলাইন/অফলাইন লজিক ---
     function setOnline() {
@@ -131,13 +135,18 @@
         });
     }
 
-    function setOffline() {
-        if (!myCode) return;
-        const timerId = setTimeout(() => {
-            db.collection("users").doc(myCode).update({ status: 'offline' });
-        }, 3000); 
-        localStorage.setItem('offTimerId', timerId);
-    }
+   function setOffline() {
+    if (!myCode) return;
+    
+    // ৩ সেকেন্ডের জায়গায় ৫ সেকেন্ড করুন, যাতে এক পেজ থেকে অন্য পেজে যাওয়ার সময় স্ট্যাটাস না কাটে
+    const timerId = setTimeout(() => {
+        db.collection("users").doc(myCode).update({ 
+            status: 'offline',
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    }, 5000); 
+    localStorage.setItem('offTimerId', timerId);
+}
 
     // পেজ নেভিগেশন (replace ব্যবহার করে হিস্ট্রি লুপ কমানো)
     function navigateTo(url) {
