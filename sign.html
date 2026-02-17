@@ -3,98 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>একাউন্ট তৈরি করুন</title>
-    <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0084ff">
-
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-  }
-</script>
+    <title>Sign Up - Messenger</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .sign-card { width: 330px; background: white; padding: 40px 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
-        h2 { color: #0084ff; margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; outline: none; font-size: 16px; }
-        input:focus { border-color: #0084ff; }
-        .btn-confirm { width: 100%; background: #28a745; color: white; border: none; padding: 14px; border-radius: 10px; font-size: 17px; cursor: pointer; font-weight: bold; }
-        #status { margin-top: 15px; font-size: 14px; font-weight: bold; }
+        * { box-sizing: border-box; }
+        body, html { height: 100%; margin: 0; font-family: 'Segoe UI', sans-serif; }
+        
+        body { 
+            background: #f0f2f5; 
+            display: flex; justify-content: center; align-items: center; 
+        }
+
+        /* মেইন কন্টেইনার এবং ব্লার ইফেক্ট */
+        .main-wrapper {
+            width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            transition: filter 0.3s ease;
+        }
+        .blur { filter: blur(5px); pointer-events: none; }
+
+        .signup-card { 
+            background: white; padding: 35px; border-radius: 15px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+            width: 90%; max-width: 400px; text-align: center; 
+        }
+
+        .logo-section { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .logo-section img { width: 45px; height: 45px; border-radius: 10px; object-fit: cover; }
+        .logo-section h1 { font-size: 24px; color: #0084ff; margin: 0; font-weight: 800; }
+
+        p { color: #65676b; font-size: 14px; margin-bottom: 25px; }
+
+        input { 
+            width: 100%; padding: 14px 15px; margin-bottom: 15px; 
+            border: 1px solid #dddfe2; border-radius: 10px; 
+            font-size: 16px; outline: none; transition: 0.3s;
+            background: #f5f6f7;
+        }
+        input:focus { border-color: #0084ff; background: #fff; box-shadow: 0 0 5px rgba(0,132,255,0.2); }
+
+        .signup-btn { 
+            width: 100%; padding: 14px; background: #0084ff; color: white; 
+            border: none; border-radius: 10px; font-size: 18px; font-weight: bold; 
+            cursor: pointer; transition: 0.2s; margin-top: 10px;
+        }
+        .signup-btn:active { transform: scale(0.98); }
+
+        .footer-link { margin-top: 25px; font-size: 14px; color: #65676b; }
+        .footer-link a { color: #0084ff; text-decoration: none; font-weight: bold; }
+
+        /* কাস্টম পপআপ স্টাইল */
+        .popup-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.3);
+            display: none; justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+        .popup-card {
+            background: white; padding: 25px; border-radius: 15px;
+            width: 80%; max-width: 320px; text-align: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            from { transform: scale(0.7); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .popup-card h3 { margin-top: 0; color: #1c1e21; }
+        .popup-card p { margin-bottom: 20px; font-size: 15px; color: #4b4f56; }
+        .popup-close-btn {
+            background: #0084ff; color: white; border: none;
+            padding: 10px 25px; border-radius: 8px; cursor: pointer;
+            font-weight: bold; width: 100%;
+        }
     </style>
 </head>
 <body>
 
-<div class="sign-card">
-    <h2>Messenger</h2>
-    <p style="color: #666; margin-bottom: 20px;">নতুন একাউন্ট তৈরি করুন</p>
-    
-    <input type="text" id="userName" placeholder="আপনার নাম (ইংরেজিতে)">
-    <input type="number" id="userCode" placeholder="৬ সংখ্যার ইউনিক কোড" oninput="if(this.value.length > 6) this.value = this.value.slice(0, 6);">
-    
-    <button class="btn-confirm" onclick="createAccount()">কনফার্ম করুন</button>
-    
-    <div id="status"></div>
+<div class="popup-overlay" id="popupOverlay">
+    <div class="popup-card">
+        <h3 id="popupTitle">অ্যালার্ট</h3>
+        <p id="popupMsg"></p>
+        <button class="popup-close-btn" onclick="closePopup()">ঠিক আছে</button>
+    </div>
+</div>
+
+<div class="main-wrapper" id="mainWrapper">
+    <div class="signup-card">
+        <div class="logo-section">
+            <img src="logo.png" alt="Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/5968/5968771.png'">
+            <h1>Messenger</h1>
+        </div>
+        <p>নতুন অ্যাকাউন্ট তৈরি করুন</p>
+
+        <input type="text" id="userName" placeholder="আপনার পূর্ণ নাম">
+        <input type="number" id="userCode" placeholder="৬ সংখ্যার সিক্রেট কোড" oninput="if(this.value.length > 6) this.value = this.value.slice(0, 6);">
+        
+        <button class="signup-btn" id="btn" onclick="createAccount()">সাইন আপ</button>
+
+        <div class="footer-link">
+            ইতিমধ্যে অ্যাকাউন্ট আছে? <a href="login.html">লগইন করুন</a>
+        </div>
+    </div>
 </div>
 
 <script>
-    // আপনার ফায়ারবেজ কনফিগারেশন
     const firebaseConfig = {
         apiKey: "AIzaSyD_7v6rBHjVLHVK5OGiJpkgBzAuaJO8vn0",
         authDomain: "boi-baz-v2.firebaseapp.com",
         projectId: "boi-baz-v2",
-        storageBucket: "boi-baz-v2.firebasestorage.app",
-        messagingSenderId: "573343324145",
         appId: "1:573343324145:web:42899dd75501af36985650"
     };
 
-    // ফায়ারবেজ ইনিশিয়ালাইজ
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore(); // Firestore ব্যবহার করছি
+    const db = firebase.firestore();
 
-    function createAccount() {
-        const name = document.getElementById('userName').value;
-        const code = document.getElementById('userCode').value;
-        const status = document.getElementById('status');
+    // কাস্টম পপআপ ফাংশন
+    function showPopup(title, message) {
+        document.getElementById('popupTitle').innerText = title;
+        document.getElementById('popupMsg').innerText = message;
+        document.getElementById('popupOverlay').style.display = 'flex';
+        document.getElementById('mainWrapper').classList.add('blur');
+    }
 
-        if (name.trim() !== "" && code.length === 6) {
-            status.style.color = "blue";
-            status.innerText = "অ্যাকাউন্ট তৈরি হচ্ছে...";
+    function closePopup() {
+        document.getElementById('popupOverlay').style.display = 'none';
+        document.getElementById('mainWrapper').classList.remove('blur');
+    }
 
-            // Firestore-এ 'users' কালেকশনে তথ্য সেভ করা
-            db.collection("users").doc(code).set({
-                userName: name,
-                userCode: code,
-                joinedAt: firebase.firestore.FieldValue.serverTimestamp()
-            })
-            .then(() => {
-                // ব্রাউজারের লোকাল মেমোরিতে নাম ও কোড সেভ রাখা
-                localStorage.setItem("username", name);
+    async function createAccount() {
+        const name = document.getElementById('userName').value.trim();
+        const code = document.getElementById('userCode').value.trim();
+        const btn = document.getElementById('btn');
+
+        if (!name || code.length !== 6) {
+            showPopup("ভুল হয়েছে", "দয়া করে নাম এবং সঠিক ৬ সংখ্যার কোড দিন!");
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = "যাচাই করা হচ্ছে...";
+
+        try {
+            const userRef = db.collection("users").doc(code);
+            const doc = await userRef.get();
+
+            if (doc.exists) {
+                showPopup("কোডটি ব্যবহৃত", "ইতিমধ্যে এই কোড দ্বারা অ্যাকাউন্ট রয়েছে অন্য কোড দিয়ে ট্রাই করুন।");
+                btn.disabled = false;
+                btn.innerText = "সাইন আপ";
+            } else {
+                await userRef.set({
+                    userName: name,
+                    userCode: code,
+                    status: 'online',
+                    profilePic: '',
+                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
                 localStorage.setItem("usercode", code);
+                localStorage.setItem("username", name);
                 
-                status.style.color = "green";
-                status.innerText = "সফল হয়েছে! হোম পেজে নিয়ে যাওয়া হচ্ছে...";
-
-                // ১.৫ সেকেন্ড পর হোম পেজে পাঠানো
+                // সফল হলে রিডাইরেক্ট করার আগে ছোট মেসেজ
+                btn.innerText = "সফল হয়েছে!";
                 setTimeout(() => {
                     window.location.href = "index.html";
-                }, 1500);
-            })
-            .catch((error) => {
-                status.style.color = "red";
-                status.innerText = "ভুল হয়েছে: " + error.message;
-            });
-
-        } else {
-            status.style.color = "red";
-            status.innerText = "সঠিক নাম এবং ৬ সংখ্যার কোড দিন!";
+                }, 500);
+            }
+        } catch (error) {
+            showPopup("ত্রুটি", "সার্ভারে সমস্যা হয়েছে, আবার চেষ্টা করুন।");
+            btn.disabled = false;
+            btn.innerText = "সাইন আপ";
         }
     }
 </script>
-
 </body>
-
 </html>
