@@ -189,7 +189,7 @@
         if (d.typingWith === myCode) {
             sl.innerText = "typing..."; sl.style.color = "#0084ff";
         } else if (d.status === 'online') {
-            sl.innerText = d.currentChat === chatId ? "active now" : "active on messenger";
+            sl.innerText = d.currentChat === chatId ? "active on your page" : "active on another page";
             sl.style.color = "#31a24c";
         } else {
             sl.innerText = "offline"; sl.style.color = "#65676b";
@@ -269,3 +269,4 @@
 </script>
 </body>
 </html>
+
